@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ForecastType {
+  LONG_TERM_PLAN
+  ROLLING_PRODUCTION
+}
+
+enum OrganizationType {
+  MANUFACTURING
+  SALES
+}
+
+enum SalesType {
+  PERSON
+  TEAM
+}
+
+enum DimensionType {
+  PRODUCT
+  CHANNEL
+}
+
+enum VersionOriginStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum AuthProvider {
+  LOCAL
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  displayName      String
+  passwordHash     String
+  authProvider     AuthProvider     @default(LOCAL)
+  allowFrozenEdit  Boolean          @default(false)
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  memberships      OrganizationMembership[]
+  roleAssignments  UserRole[]
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bus       BU[]
+  memberships OrganizationMembership[]
+}
+
+model BU {
+  id          String   @id @default(cuid())
+  groupId     String
+  code        String
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  companies   Company[]
+  memberships OrganizationMembership[]
+
+  @@unique([groupId, code])
+}
+
+model Company {
+  id          String           @id @default(cuid())
+  buId        String?
+  code        String           @unique
+  name        String
+  type        OrganizationType
+  timezone    String           @default("UTC")
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  bu          BU?              @relation(fields: [buId], references: [id], onDelete: SetNull)
+  plants      Plant[]
+  sales       Sales[]
+  memberships OrganizationMembership[]
+}
+
+model Plant {
+  id          String   @id @default(cuid())
+  companyId   String
+  code        String
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sales       Sales[]
+  memberships OrganizationMembership[]
+
+  @@unique([companyId, code])
+}
+
+model Sales {
+  id         String    @id @default(cuid())
+  companyId  String
+  plantId    String?
+  code       String
+  name       String
+  type       SalesType
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  plant      Plant?    @relation(fields: [plantId], references: [id], onDelete: SetNull)
+  forecasts  Forecast[]
+
+  @@unique([companyId, code])
+}
+
+model OrganizationMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String?
+  buId      String?
+  companyId String?
+  plantId   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group     Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  bu        BU?      @relation(fields: [buId], references: [id], onDelete: SetNull)
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  plant     Plant?   @relation(fields: [plantId], references: [id], onDelete: SetNull)
+}
+
+model Dimension {
+  id        String        @id @default(cuid())
+  code      String
+  name      String
+  type      DimensionType
+  groupId   String?
+  buId      String?
+  companyId String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  levels    DimensionLevel[]
+  nodes     DimensionNode[]
+}
+
+model DimensionLevel {
+  id           String   @id @default(cuid())
+  dimensionId  String
+  levelOrder   Int
+  code         String
+  name         String
+  parentLevelId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  dimension    Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  parentLevel  DimensionLevel? @relation("LevelTree", fields: [parentLevelId], references: [id], onDelete: SetNull)
+  childLevels  DimensionLevel[] @relation("LevelTree")
+  nodes        DimensionNode[]
+
+  @@unique([dimensionId, levelOrder])
+}
+
+model DimensionNode {
+  id            String   @id @default(cuid())
+  dimensionId   String
+  levelId       String
+  parentNodeId  String?
+  code          String
+  name          String
+  unitOfMeasure String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  dimension     Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  level         DimensionLevel @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  parentNode    DimensionNode? @relation("NodeTree", fields: [parentNodeId], references: [id], onDelete: SetNull)
+  childNodes    DimensionNode[] @relation("NodeTree")
+}
+
+model ForecastOrigin {
+  id          String   @id @default(cuid())
+  companyId   String?
+  code        String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  versionOrigins VersionOrigin[]
+}
+
+model PeriodConfig {
+  id                   String       @id @default(cuid())
+  forecastType         ForecastType
+  periodUnit           String
+  periodLength         Int
+  forecastingHorizontal Int
+  updateFrequency      String
+  periodKeyFormat      String
+  mandatoryPeriodCount Int
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  forecasts            Forecast[]
+}
+
+model ZeroVsNotUpdatedConfig {
+  id                        String   @id @default(cuid())
+  companyId                 String?
+  treatNullAs               String
+  highlightNotUpdated       Boolean  @default(true)
+  mandatoryPeriodValidation String
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model Forecast {
+  id                   String       @id @default(cuid())
+  forecastType         ForecastType
+  buId                 String?
+  salesId              String?
+  periodConfigId       String
+  mandatoryPeriodCount Int
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  sales                Sales?       @relation(fields: [salesId], references: [id], onDelete: SetNull)
+  periodConfig         PeriodConfig @relation(fields: [periodConfigId], references: [id], onDelete: Restrict)
+  versions             Version[]
+}
+
+model Version {
+  id                        String       @id @default(cuid())
+  forecastId                String
+  forecastType              ForecastType
+  versionCode               String
+  productionPlanningYear    Int
+  productionPlanningQuarter Int?
+  productionPlanningMonth   Int?
+  sequence                  String
+  scope                     String
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  forecast                  Forecast     @relation(fields: [forecastId], references: [id], onDelete: Cascade)
+  origins                   VersionOrigin[]
+
+  @@unique([forecastId, versionCode])
+}
+
+model VersionOrigin {
+  id               String              @id @default(cuid())
+  versionId        String
+  forecastOriginId String
+  status           VersionOriginStatus @default(DRAFT)
+  isActivated      Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  version          Version             @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  forecastOrigin   ForecastOrigin      @relation(fields: [forecastOriginId], references: [id], onDelete: Restrict)
+  entries          ForecastData[]
+}
+
+model ForecastData {
+  id             String   @id @default(cuid())
+  versionOriginId String
+  productNodeId  String
+  channelNodeId  String
+  periodKey      String
+  quantity       Decimal?
+  price          Decimal?
+  currency       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  versionOrigin  VersionOrigin @relation(fields: [versionOriginId], references: [id], onDelete: Cascade)
+
+  @@index([versionOriginId, periodKey])
+}
+
+model AllocationRule {
+  id                 String   @id @default(cuid())
+  dimensionId        String
+  levelId            String
+  parentNodeId       String
+  childNodeId        String
+  allocationPercentage Decimal
+  versionOriginId    String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AdjustmentLog {
+  id            String   @id @default(cuid())
+  versionOriginId String
+  productNodeId String?
+  channelNodeId String?
+  periodKey     String
+  oldQuantity   Decimal?
+  newQuantity   Decimal?
+  adjustedAt    DateTime @default(now())
+  adjustedBy    String
+  allocationRun Int?
+}
+
+model FreezeRule {
+  id          String   @id @default(cuid())
+  companyId   String?
+  plantId     String?
+  startPeriod String
+  endPeriod   String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Connector {
+  id              String   @id @default(cuid())
+  companyId       String
+  name            String
+  baseUrl         String
+  method          String
+  authType        String
+  headersJson     String?
+  payloadTemplate String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  mappings        ConnectorFieldMapping[]
+}
+
+model ConnectorFieldMapping {
+  id          String   @id @default(cuid())
+  connectorId String
+  sourceField String
+  targetField String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  connector   Connector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+}
