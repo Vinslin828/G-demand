@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "masterData": "主数据",
+    "forecastPlanning": "预测计划",
+    "adjustment": "调整",
+    "analysis": "分析",
+    "integration": "集成",
+    "admin": "管理"
+  },
+  "modules": {
+    "productAttributes": "产品属性",
+    "channelAttributes": "渠道属性",
+    "forecastOrigin": "预测来源",
+    "periodConfig": "期间配置",
+    "zeroHandling": "零值处理",
+    "versionManagement": "版本管理",
+    "versionOrigin": "版本来源",
+    "templateGeneration": "模板生成",
+    "forecastUpload": "预测上传",
+    "forecastGrid": "预测表格",
+    "allocationRules": "分配规则",
+    "managerAdjustment": "管理层调整",
+    "breakdown": "拆分",
+    "adjustmentLogs": "调整日志",
+    "pivotAnalysis": "透视分析",
+    "ltpVsRolling": "LTP vs 滚动",
+    "valueAnalysis": "价值分析",
+    "export": "导出",
+    "erpConnector": "ERP 连接器",
+    "fieldMapping": "字段映射",
+    "manualSync": "手动同步",
+    "syncHistory": "同步历史",
+    "usersRole": "用户与角色",
+    "rolePermissions": "角色与权限",
+    "organization": "组织架构"
+  },
+  "profile": {
+    "title": "用户资料",
+    "userId": "用户 ID",
+    "email": "电子邮件",
+    "displayName": "显示名称",
+    "roles": "角色",
+    "noRoles": "未分配角色",
+    "language": "语言",
+    "changePassword": "修改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认新密码",
+    "passwordMismatch": "两次输入的新密码不一致。",
+    "passwordChanged": "密码修改成功。",
+    "savePassword": "保存新密码",
+    "close": "关闭"
+  },
+  "common": {
+    "save": "保存更改",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "create": "创建",
+    "refresh": "刷新",
+    "loading": "加载中…",
+    "signOut": "退出登录",
+    "manual": "手动",
+    "fromUpload": "来自上传",
+    "optional": "可选",
+    "required": "必填"
+  },
+  "lang": {
+    "en": "English",
+    "zhCN": "中文（简体）"
+  }
+}

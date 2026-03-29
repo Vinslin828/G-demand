@@ -502,12 +502,19 @@ body {
   gap: 10px;
 }
 
-/* Optional field hint */
+/* Optional / required field hints */
 .field-optional {
   font-size: 11px;
   color: #a0a0a8;
   font-weight: 400;
   margin-left: 4px;
+}
+
+.field-required {
+  font-size: 11px;
+  color: #d93025;
+  font-weight: 600;
+  margin-left: 2px;
 }
 
 /* Entity header row (badge + title) */

@@ -93,36 +93,55 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   bus       BU[]
+  companies Company[]
   memberships OrganizationMembership[]
 }
 
 model BU {
-  id          String   @id @default(cuid())
-  groupId     String
-  code        String
-  name        String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  companies   Company[]
-  memberships OrganizationMembership[]
+  id             String       @id @default(cuid())
+  groupId        String
+  code           String
+  name           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  group          Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  companyLinks   BUCompany[]
+  memberships    OrganizationMembership[]
 
   @@unique([groupId, code])
 }
 
 model Company {
   id          String           @id @default(cuid())
-  buId        String?
+  groupId     String?
   code        String           @unique
   name        String
   type        OrganizationType
   timezone    String           @default("UTC")
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
-  bu          BU?              @relation(fields: [buId], references: [id], onDelete: SetNull)
+  group       Group?           @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  buLinks     BUCompany[]
   plants      Plant[]
   sales       Sales[]
+  forecasts   Forecast[]
   memberships OrganizationMembership[]
+}
+
+model BUCompany {
+  buId      String
+  companyId String
+  bu        BU      @relation(fields: [buId], references: [id], onDelete: Cascade)
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([buId, companyId])
+}
+
+model OrgLock {
+  id       String    @id @default("singleton")
+  isLocked Boolean   @default(false)
+  lockedAt DateTime?
+  updatedAt DateTime @updatedAt
 }
 
 model Plant {
@@ -134,6 +153,7 @@ model Plant {
   updatedAt   DateTime @updatedAt
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   sales       Sales[]
+  forecasts   Forecast[]
   memberships OrganizationMembership[]
 
   @@unique([companyId, code])
@@ -185,18 +205,19 @@ model Dimension {
 }
 
 model DimensionLevel {
-  id           String   @id @default(cuid())
-  dimensionId  String
-  levelOrder   Int
-  code         String
-  name         String
-  parentLevelId String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  dimension    Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
-  parentLevel  DimensionLevel? @relation("LevelTree", fields: [parentLevelId], references: [id], onDelete: SetNull)
-  childLevels  DimensionLevel[] @relation("LevelTree")
-  nodes        DimensionNode[]
+  id               String   @id @default(cuid())
+  dimensionId      String
+  levelOrder       Int
+  code             String
+  name             String
+  parentLevelId    String?
+  allowManualInput Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  dimension        Dimension @relation(fields: [dimensionId], references: [id], onDelete: Cascade)
+  parentLevel      DimensionLevel? @relation("LevelTree", fields: [parentLevelId], references: [id], onDelete: SetNull)
+  childLevels      DimensionLevel[] @relation("LevelTree")
+  nodes            DimensionNode[]
 
   @@unique([dimensionId, levelOrder])
 }
@@ -255,12 +276,16 @@ model ZeroVsNotUpdatedConfig {
 model Forecast {
   id                   String       @id @default(cuid())
   forecastType         ForecastType
-  buId                 String?
-  salesId              String?
+  buId                 String?      // LTP: Group → BU
+  companyId            String?      // RFC: Group → Company
+  plantId              String?      // RFC: Group → Company → Plant
+  salesId              String?      // legacy (kept for backward compat)
   periodConfigId       String
   mandatoryPeriodCount Int
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
+  company              Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  plant                Plant?       @relation(fields: [plantId], references: [id], onDelete: SetNull)
   sales                Sales?       @relation(fields: [salesId], references: [id], onDelete: SetNull)
   periodConfig         PeriodConfig @relation(fields: [periodConfigId], references: [id], onDelete: Restrict)
   versions             Version[]
@@ -274,8 +299,10 @@ model Version {
   productionPlanningYear    Int
   productionPlanningQuarter Int?
   productionPlanningMonth   Int?
-  sequence                  String
+  sequence                  String       @default("A")
   scope                     String
+  closingDate               DateTime?    // RFC: upload deadline
+  isAutoGenerated           Boolean      @default(false)
   createdAt                 DateTime     @default(now())
   updatedAt                 DateTime     @updatedAt
   forecast                  Forecast     @relation(fields: [forecastId], references: [id], onDelete: Cascade)
@@ -311,6 +338,90 @@ model ForecastData {
   versionOrigin  VersionOrigin @relation(fields: [versionOriginId], references: [id], onDelete: Cascade)
 
   @@index([versionOriginId, periodKey])
+}
+
+// ── Working Calendar ────────────────────────────────────────────────────────
+
+model WorkingCalendar {
+  id          String                @id @default(cuid())
+  name        String
+  year        Int
+  timezone    String                @default("UTC")
+  description String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  dates       WorkingCalendarDate[]
+  assignments CalendarAssignment[]
+  closingRules ClosingRule[]
+}
+
+model WorkingCalendarDate {
+  id         String          @id @default(cuid())
+  calendarId String
+  date       DateTime        @db.Date
+  label      String?
+  calendar   WorkingCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarId, date])
+}
+
+model CalendarAssignment {
+  id         String          @id @default(cuid())
+  calendarId String
+  buId       String?
+  companyId  String?
+  plantId    String?
+  createdAt  DateTime        @default(now())
+  calendar   WorkingCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+}
+
+model ClosingRule {
+  id            String                    @id @default(cuid())
+  forecastType  ForecastType
+  nthWorkingDay Int
+  calendarId    String?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  calendar      WorkingCalendar?          @relation(fields: [calendarId], references: [id], onDelete: SetNull)
+  assignments   ClosingRuleAssignment[]
+}
+
+model ClosingRuleAssignment {
+  id            String      @id @default(cuid())
+  ruleId        String
+  buId          String?
+  companyId     String?
+  plantId       String?
+  createdAt     DateTime    @default(now())
+  rule          ClosingRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+}
+
+model ForecastTemplate {
+  id             String                       @id @default(cuid())
+  name           String
+  productDimId   String
+  productLevelId String
+  channelDimId   String
+  channelLevelId String
+  isLocked       Boolean                      @default(false)
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+  assignments    ForecastTemplateAssignment[]
+}
+
+model ForecastTemplateAssignment {
+  id               String           @id @default(cuid())
+  templateId       String
+  forecastType     ForecastType
+  buId             String?
+  companyId        String?
+  plantId          String?
+  forecastOriginId String?
+  initialYear      Int
+  initialQuarter   Int?
+  initialMonth     Int?
+  createdAt        DateTime         @default(now())
+  template         ForecastTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
 
 model AllocationRule {

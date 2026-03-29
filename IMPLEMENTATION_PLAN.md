@@ -273,13 +273,17 @@ FreezeRule, Connector (unchanged)
 - **Per-sales view** and **Consolidated view** (rolling only)
 - **Long-term plan view** (BU-scoped)
 
-### Phase 3b: Template Generation & Upload
-- Generate upload template (Excel/CSV) from product/channel config
-- Template columns: product attributes, channel attributes, periods, quantity (optionally unit)
-- Scoped to Version + Origin (user selects version and origin when downloading)
-- Download for users to fill and upload into the selected VersionOrigin
-- **Product unit on upload:** first-time upload can update product unit in config; if same product has different units in same file or in later files (different version/origin) → show error; provide **UI to correct product unit** if first upload was wrong
-- **Price/currency (optional):** if user uploads with price/currency, store as reference; used for analysis only (value = quantity × price)
+### Phase 3b: Template Generation & Upload ✅ DONE
+- ✅ Generate CSV template from product/channel leaf nodes + period keys
+- ✅ Template columns: ProductCode, ProductName, ChannelCode, ChannelName, Unit, [period keys...], Price, Currency
+- ✅ Scoped to Version + Origin; periods auto-generated from PeriodConfig + version start period
+- ✅ Download button per VersionOrigin in UI
+- ✅ Upload CSV (FileReader → JSON body → parse → upsert ForecastData); replaces all existing data for that origin
+- ✅ Product unit: first upload sets unit on DimensionNode; subsequent uploads with different unit → error row
+- ✅ Price/currency: optional columns stored on ForecastData
+- ✅ Upload result: imported count, warnings (row-level errors), unit update count
+- ✅ Data stats per origin: total data points + per-period quantity sums shown inline
+- ✅ GET /versions/:versionId/origins/:originId/data — summary (total + byPeriod groupBy)
 
 ### Phase 4: Adjustment & Allocation
 - `AllocationRule` model (scoped to **all** or per **VersionOrigin**); per dimension (channel OR product)

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { env } from "../config/env.js";
 import { prisma } from "../lib/prisma.js";
+import { requireAuth, type AuthedRequest } from "../middleware/auth.js";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -43,4 +44,39 @@ authRouter.post("/login", async (req, res) => {
       displayName: user.displayName
     }
   });
+});
+
+authRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: {
+      id: true,
+      email: true,
+      displayName: true,
+      roleAssignments: { select: { role: { select: { id: true, name: true } } } }
+    }
+  });
+  if (!user) return res.status(404).json({ message: "User not found." });
+  return res.json(user);
+});
+
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8)
+});
+
+authRouter.post("/change-password", requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ message: "Invalid payload. New password must be at least 8 characters." });
+
+  const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+  if (!user) return res.status(404).json({ message: "User not found." });
+
+  const ok = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+  if (!ok) return res.status(401).json({ message: "Current password is incorrect." });
+
+  const hash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await prisma.user.update({ where: { id: user.id }, data: { passwordHash: hash } });
+
+  return res.json({ message: "Password changed successfully." });
 });

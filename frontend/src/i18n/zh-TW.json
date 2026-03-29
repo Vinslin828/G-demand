@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "masterData": "主資料",
+    "forecastPlanning": "預測計劃",
+    "adjustment": "調整",
+    "analysis": "分析",
+    "integration": "整合",
+    "admin": "管理"
+  },
+  "modules": {
+    "productAttributes": "產品屬性",
+    "channelAttributes": "渠道屬性",
+    "forecastOrigin": "預測來源",
+    "periodConfig": "期間設定",
+    "zeroHandling": "零值處理",
+    "versionManagement": "版本管理",
+    "versionOrigin": "版本來源",
+    "templateGeneration": "範本產生",
+    "forecastUpload": "預測上傳",
+    "forecastGrid": "預測表格",
+    "allocationRules": "分配規則",
+    "managerAdjustment": "管理層調整",
+    "breakdown": "拆分",
+    "adjustmentLogs": "調整記錄",
+    "pivotAnalysis": "樞紐分析",
+    "ltpVsRolling": "LTP vs 滾動",
+    "valueAnalysis": "價值分析",
+    "export": "匯出",
+    "erpConnector": "ERP 連接器",
+    "fieldMapping": "欄位對應",
+    "manualSync": "手動同步",
+    "syncHistory": "同步記錄",
+    "usersRole": "使用者與角色",
+    "rolePermissions": "角色與權限",
+    "organization": "組織架構"
+  },
+  "profile": {
+    "title": "使用者資料",
+    "userId": "使用者 ID",
+    "email": "電子郵件",
+    "displayName": "顯示名稱",
+    "roles": "角色",
+    "noRoles": "未指派角色",
+    "language": "語言",
+    "changePassword": "變更密碼",
+    "currentPassword": "目前密碼",
+    "newPassword": "新密碼",
+    "confirmPassword": "確認新密碼",
+    "passwordMismatch": "兩次輸入的新密碼不一致。",
+    "passwordChanged": "密碼變更成功。",
+    "savePassword": "儲存新密碼",
+    "close": "關閉"
+  },
+  "common": {
+    "save": "儲存變更",
+    "cancel": "取消",
+    "delete": "刪除",
+    "edit": "編輯",
+    "add": "新增",
+    "create": "建立",
+    "refresh": "重新整理",
+    "loading": "載入中…",
+    "signOut": "登出",
+    "manual": "手動",
+    "fromUpload": "來自上傳",
+    "optional": "選填",
+    "required": "必填"
+  },
+  "lang": {
+    "en": "English",
+    "zhTW": "中文（繁體）"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "masterData": "Master Data",
+    "forecastPlanning": "Forecast Planning",
+    "adjustment": "Adjustment",
+    "analysis": "Analysis",
+    "integration": "Integration",
+    "admin": "Admin"
+  },
+  "modules": {
+    "productAttributes": "Product Attributes",
+    "channelAttributes": "Channel Attributes",
+    "forecastOrigin": "Forecast Origin",
+    "periodConfig": "Period Config",
+    "zeroHandling": "Zero Handling",
+    "versionManagement": "Version Management",
+    "versionOrigin": "Version Origin",
+    "templateGeneration": "Template Generation",
+    "forecastUpload": "Forecast Upload",
+    "forecastGrid": "Forecast Grid",
+    "allocationRules": "Allocation Rules",
+    "managerAdjustment": "Manager Adjustment",
+    "breakdown": "Breakdown",
+    "adjustmentLogs": "Adjustment Logs",
+    "pivotAnalysis": "Pivot Analysis",
+    "ltpVsRolling": "LTP vs Rolling",
+    "valueAnalysis": "Value Analysis",
+    "export": "Export",
+    "erpConnector": "ERP Connector",
+    "fieldMapping": "Field Mapping",
+    "manualSync": "Manual Sync",
+    "syncHistory": "Sync History",
+    "usersRole": "Users & Role",
+    "rolePermissions": "Role & Permissions",
+    "organization": "Organization"
+  },
+  "profile": {
+    "title": "User Profile",
+    "userId": "User ID",
+    "email": "Email",
+    "displayName": "Display Name",
+    "roles": "Roles",
+    "noRoles": "No roles assigned",
+    "language": "Language",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "passwordMismatch": "New passwords do not match.",
+    "passwordChanged": "Password changed successfully.",
+    "savePassword": "Save New Password",
+    "close": "Close"
+  },
+  "common": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "refresh": "Refresh",
+    "loading": "Loading…",
+    "signOut": "Sign out",
+    "manual": "manual",
+    "fromUpload": "from upload",
+    "optional": "optional",
+    "required": "required"
+  },
+  "lang": {
+    "en": "English",
+    "zhTW": "中文（繁體）"
+  }
+}
